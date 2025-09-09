@@ -1,21 +1,35 @@
 {
-  "name": "Calculadora Eléctrica Cuba 2024",
-  "short_name": "Factura Cuba",
-  "start_url": "index.html",
-  "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0078D7",
-  "description": "Calcula tu factura eléctrica en Cuba según las tarifas vigentes.",
+  "description": "Calcula tu factura eléctrica en Cuba según las tarifas vigentes. - factura-electrica/index.html at main · denisgpm7/factura-electrica",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "GitHub",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "GitHub",
+  "start_url": "/",
+  "theme_color": "#1e2327",
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "src": "https://github.githubassets.com/favicons/favicon.svg",
+      "type": "image/svg+xml"
     },
     {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "https://github.githubassets.com/assets/pinned-octocat-093da3e6fa40.svg"
+    },
+    {
+      "src": "https://opengraph.githubassets.com/01afce74ae157c5ebd5d5f920a07aa0c763cad25ed35021bf38018e0260ab0aa/denisgpm7/factura-electrica",
+      "type": "image/png",
+      "sizes": "1200x600"
+    },
+    {
+      "src": "https://github.com/windows-tile.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "https://github.com/favicon.ico",
+      "type": "image/x-icon"
     }
   ]
 }
