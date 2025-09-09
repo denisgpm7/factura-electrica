@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora Eléctrica Cuba 2024</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #f4f4f4; color: #333; }
+    header { background: #0078D7; color: white; padding: 1rem; text-align: center; }
+    main { padding: 1rem; max-width: 600px; margin: auto; }
+    select, input, button { width: 100%; padding: 0.75rem; margin: 0.5rem 0; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
+    button { background-color: #0078D7; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #005fa3; }
+    .result { background: #e0f7fa; padding: 1rem; margin-top: 1rem; border-radius: 5px; }
+    .hidden { display: none; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>💡 Calculadora Eléctrica Cuba 2024</h1>
+  </header>
+  <main>
+    <label for="modo">Selecciona el modo de cálculo:</label>
+    <select id="modo" onchange="mostrarFormulario()">
+      <option value="consumo">Por consumo directo</option>
+      <option value="lectura">Por lectura del contador</option>
+    </select>
+
+    <div id="formConsumo">
+      <label for="consumo">Consumo mensual (kWh):</label>
+      <input type="number" id="consumo" placeholder="Ej. 570" />
+    </div>
+
+    <div id="formLectura" class="hidden">
+      <label for="lecturaAnterior">Lectura anterior (kWh):</label>
+      <input type="number" id="lecturaAnterior" placeholder="Ej. 12500" />
+      <label for="lecturaActual">Lectura actual (kWh):</label>
+      <input type="number" id="lecturaActual" placeholder="Ej. 12950" />
+    </div>
+
+    <button onclick="calcularFactura()">Calcular factura</button>
+    <button onclick="copiarResultado()">📋 Copiar resultado</button>
+    <div class="result" id="resultado"></div>
+  </main>
+
+  <script>
+    const tarifas = [
+      { rango: [0, 100], precio: 0.33 }, { rango: [101, 150], precio: 1.07 },
+      { rango: [151, 200], precio: 1.43 }, { rango: [201, 250], precio: 2.46 },
+      { rango: [251, 300], precio: 3.00 }, { rango: [301, 350], precio: 4.00 },
+      { rango: [351, 400], precio: 5.00 }, { rango: [401, 450], precio: 6.00 },
+      { rango: [451, 500], precio: 7.00 }, { rango: [501, 600], precio: 9.20 },
+      { rango: [601, 700], precio: 9.45 }, { rango: [701, 1000], precio: 9.85 },
+      { rango: [1001, 1800], precio: 10.80 }, { rango: [1801, 2600], precio: 11.80 },
+      { rango: [2601, 3400], precio: 12.90 }, { rango: [3401, 4200], precio: 13.95 },
+      { rango: [4201, 5000], precio: 15.00 }, { rango: [5001, Infinity], precio: 20.00 }
+    ];
+
+    function mostrarFormulario() {
+      const modo = document.getElementById("modo").value;
+      document.getElementById("formConsumo").classList.toggle("hidden", modo !== "consumo");
+      document.getElementById("formLectura").classList.toggle("hidden", modo !== "lectura");
+    }
+
+    function calcularFactura() {
+      const modo = document.getElementById("modo").value;
+      let consumo;
+
+      if (modo === "consumo") {
+        consumo = parseFloat(document.getElementById("consumo").value);
+      } else {
+        const lecturaAnterior = parseFloat(document.getElementById("lecturaAnterior").value);
+        const lecturaActual = parseFloat(document.getElementById("lecturaActual").value);
+        if (isNaN(lecturaAnterior) || isNaN(lecturaActual) || lecturaActual < lecturaAnterior) {
+          document.getElementById("resultado").innerText = "Por favor, ingrese lecturas válidas.";
+          return;
+        }
+        consumo = lecturaActual - lecturaAnterior;
+      }
+
+      if (isNaN(consumo) || consumo <= 0) {
+        document.getElementById("resultado").innerText = "Por favor, ingrese un consumo válido.";
+        return;
+      }
+
+      let restante = consumo;
+      let total = 0;
+
+      for (let tramo of tarifas) {
+        const [inicio, fin] = tramo.rango;
+        const kwhInicio = Math.max(inicio, consumo - restante + 1);
+        const kwhFin = Math.min(fin, consumo);
+        const kwhEnTramo = kwhFin - kwhInicio + 1;
+
+        if (kwhEnTramo > 0) {
+          let precio = tramo.precio;
+          if (inicio > 500) {
+            precio *= 1.25;
+          } else if (fin > 500 && consumo > 500) {
+            const excesoEnTramo = Math.max(0, kwhFin - 500);
+            const normalEnTramo = kwhEnTramo - excesoEnTramo;
+            total += normalEnTramo * precio;
+            total += excesoEnTramo * (precio * 1.25);
+            restante -= kwhEnTramo;
+            continue;
+          }
+          total += kwhEnTramo * precio;
+          restante -= kwhEnTramo;
+        }
+        if (restante <= 0) break;
+      }
+
+      guardarHistorial(consumo, total);
+
+      document.getElementById("resultado").innerHTML = `
+        <strong>Total a pagar:</strong> ${total.toFixed(2)} CUP<br/>
+        <strong>Consumo:</strong> ${consumo} kWh
+      `;
+      mostrarHistorial();
+    }
+
+    function guardarHistorial(consumo, total) {
+      const historial = JSON.parse(localStorage.getItem("historial") || "[]");
+      historial.push({ fecha: new Date().toLocaleDateString(), consumo, total });
+      localStorage.setItem("historial", JSON.stringify(historial));
+    }
+
+    function mostrarHistorial() {
+      const historial = JSON.parse(localStorage.getItem("historial") || "[]");
+      if (historial.length === 0) return;
+
+      let html = "<h3>📅 Historial de consumo</h3><table><tr><th>Fecha</th><th>Consumo</th><th>Total (CUP)</th></tr>";
+      historial.forEach(item => {
+        html += `<tr><td>${item.fecha}</td><td>${item.consumo} kWh</td><td>${item.total.toFixed(2)}</td></tr>`;
+      });
+      html += "</table>";
+      document.getElementById("resultado").innerHTML += html;
+    }
+
+    function copiarResultado() {
+      const texto = document.getElementById("resultado").innerText;
+      navigator.clipboard.writeText(texto).then(() => {
+        alert("Resultado copiado al portapapeles.");
+      });
+    }
+
+    // PWA: registrar service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+  </script>
+</body>
+</html>
